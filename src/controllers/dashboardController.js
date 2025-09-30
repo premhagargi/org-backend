@@ -14,14 +14,16 @@ exports.getDashboardStats = async (req, res) => {
     // Employees per department (including departments with 0 employees)
     // ---------------------------
     const departments = await Department.aggregate([
-      {
-        $lookup: {
-          from: "users",             // collection name in MongoDB (check your DB)
-          localField: "_id",
-          foreignField: "department",
-          as: "employees"
-        }
-      },
+{
+  $lookup: {
+    from: "users",
+    let: { deptId: { $toString: "$_id" } }, // convert ObjectId to string
+    pipeline: [
+      { $match: { $expr: { $eq: ["$department", "$$deptId"] } } }
+    ],
+    as: "employees"
+  }
+},
       {
         $addFields: { employeeCount: { $size: "$employees" } }
       },

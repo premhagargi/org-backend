@@ -68,7 +68,7 @@ exports.login = async (req, res) => {
 // ADMIN CREATES EMPLOYEE
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, department, salary } = req.body;
+    const { name, email, password, department, salary, position } = req.body;
 
     // Ensure employee role
     const employee = new User({
@@ -78,6 +78,7 @@ exports.createEmployee = async (req, res) => {
       role: "employee",
       department,
       salary,
+      position
     });
 
     await employee.save();
