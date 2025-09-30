@@ -5,18 +5,18 @@ const mongoose = require("mongoose"); // Import mongoose for ObjectId validation
 // List all employees (admin-only)
 exports.getAllEmployees = async (req, res) => {
   try {
-    const { department, status, search, position } = req.query;
+    const { department, status, position, q } = req.query;
 
     // Employee filter
     const filter = { role: "employee" };
     if (department) filter.department = department;
     if (status) filter.status = status;
     if (position) filter.position = { $regex: position, $options: "i" };
-    if (search) {
+    if (q) {
       filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { position: { $regex: search, $options: "i" } },
+        { name: { $regex: q, $options: "i" } },
+        { email: { $regex: q, $options: "i" } },
+        { employeeId: { $regex: q, $options: "i" } }
       ];
     }
 
