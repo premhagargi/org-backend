@@ -6,33 +6,29 @@ exports.getDashboardStats = async (req, res) => {
     // ---------------------------
     // Global active vs inactive
     // ---------------------------
+    const totalEmployees = await User.countDocuments({ role: "employee" });
     const activeEmployees = await User.countDocuments({ role: "employee", status: "active" });
     const inactiveEmployees = await User.countDocuments({ role: "employee", status: "inactive" });
 
     // ---------------------------
-    // Employees per department
+    // Employees per department (including departments with 0 employees)
     // ---------------------------
-    const departments = await User.aggregate([
-      { $match: { role: "employee" } },
-      { $group: { _id: "$department", count: { $sum: 1 } } },
+    const departments = await Department.aggregate([
       {
         $lookup: {
-          from: "departments",
+          from: "users",             // collection name in MongoDB (check your DB)
           localField: "_id",
-          foreignField: "_id",
-          as: "department"
+          foreignField: "department",
+          as: "employees"
         }
       },
-      { $unwind: "$department" },
       {
-        $project: {
-          _id: 0,
-          departmentId: "$department._id",
-          departmentName: "$department.name",
-          employeeCount: "$count"
-        }
+        $addFields: { employeeCount: { $size: "$employees" } }
       },
-      { $sort: { departmentName: 1 } }
+      {
+        $project: { _id: 1, name: 1, employeeCount: 1 }
+      },
+      { $sort: { name: 1 } }
     ]);
 
     // ---------------------------
@@ -61,8 +57,10 @@ exports.getDashboardStats = async (req, res) => {
       data: {
         activeEmployees,
         inactiveEmployees,
-        departments,
-        salaryDistribution
+        totalEmployees,
+        totalDepartments: departments.length,
+        salaryDistribution,
+        departments
       }
     });
 
@@ -71,3 +69,4 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ status: "error", message: "Server error" });
   }
 };
+
