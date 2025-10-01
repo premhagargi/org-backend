@@ -1,15 +1,35 @@
 const Department = require("../models/Department");
+const User = require("../models/User");
 
-// List all departments
+// GET /api/departments
 exports.getAllDepartments = async (req, res) => {
   try {
-    const departments = await Department.find().sort({ name: 1 });
+    // Aggregate departments with employee count
+    const departments = await Department.aggregate([
+      {
+        $lookup: {
+          from: "users",           // MongoDB collection name
+          localField: "_id",
+          foreignField: "department",
+          as: "employees"
+        }
+      },
+      {
+        $addFields: { employeeCount: { $size: "$employees" } }
+      },
+      {
+        $project: { _id: 1, name: 1, description: 1, employeeCount: 1 }
+      },
+      { $sort: { name: 1 } }
+    ]);
+
     res.json({ departments });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // Create a new department (admin-only)
 exports.createDepartment = async (req, res) => {
