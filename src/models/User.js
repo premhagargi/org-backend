@@ -13,12 +13,36 @@ const userSchema = new mongoose.Schema(
     position: { type: String },
     personalDetails: {
       dateOfBirth: { type: Date },
-      address: { type: String },
+      address: {
+        street: { type: String },
+        city: { type: String },
+        state: { type: String },
+        postalCode: { type: String },
+        country: { type: String }
+      },
       gender: { type: String, enum: ["male", "female", "other"] },
-      maritalStatus: { type: String, enum: ["single", "married", "divorced", "widowed"] }
+      maritalStatus: { type: String, enum: ["single", "married", "divorced", "widowed"] },
+      nationality: { type: String },
+      languagesSpoken: [{ type: String }],
+      educationHistory: [{
+        degree: { type: String },
+        institution: { type: String },
+        fieldOfStudy: { type: String },
+        startYear: { type: Number },
+        endYear: { type: Number },
+        grade: { type: String }
+      }],
+      previousWorkExperience: [{
+        companyName: { type: String },
+        position: { type: String },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        responsibilities: [{ type: String }],
+        location: { type: String }
+      }]
     },
     contacts: {
-      phone: { type: String },
+      phone: [{ type: String }],
       emergencyContact: {
         name: { type: String },
         relationship: { type: String },

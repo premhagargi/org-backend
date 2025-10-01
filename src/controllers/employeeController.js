@@ -83,12 +83,69 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Get employee by ID (admin-only)
+exports.createEmployee = async (req, res) => {
+  try {
+    const { 
+      name, 
+      email, 
+      password, 
+      department, 
+      salary, 
+      position,
+      personalDetails,
+      contacts
+    } = req.body;
+
+    // Ensure employee role
+    const employee = new User({
+      name,
+      email,
+      password,
+      role: "employee",
+      department,
+      salary,
+      position,
+      personalDetails: {
+        dateOfBirth: personalDetails?.dateOfBirth,
+        address: {
+          street: personalDetails?.address?.street,
+          city: personalDetails?.address?.city,
+          state: personalDetails?.address?.state,
+          postalCode: personalDetails?.address?.postalCode,
+          country: personalDetails?.address?.country
+        },
+        gender: personalDetails?.gender,
+        maritalStatus: personalDetails?.maritalStatus,
+        nationality: personalDetails?.nationality,
+        languagesSpoken: personalDetails?.languagesSpoken,
+        educationHistory: personalDetails?.educationHistory,
+        previousWorkExperience: personalDetails?.previousWorkExperience
+      },
+      contacts: {
+        phone: contacts?.phone,
+        emergencyContact: {
+          name: contacts?.emergencyContact?.name,
+          relationship: contacts?.emergencyContact?.relationship,
+          phone: contacts?.emergencyContact?.phone
+        }
+      }
+    });
+
+    await employee.save();
+
+    res.status(201).json({ message: "Employee created successfully", employee });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// GET EMPLOYEE BY ID
 exports.getEmployeeById = async (req, res) => {
   try {
     const employee = await User.findById(req.params.id)
       .populate("department")
-      .populate("leaveRequests");
+      .select("name email role department salary status position personalDetails contacts workingHours leaveRequests createdAt updatedAt");
     if (!employee || employee.role !== "employee") {
       return res.status(404).json({ message: "Employee not found" });
     }
@@ -99,7 +156,8 @@ exports.getEmployeeById = async (req, res) => {
   }
 };
 
-// Update employee (admin-only)
+
+// UPDATE EMPLOYEE
 exports.updateEmployee = async (req, res) => {
   try {
     const { 
@@ -119,15 +177,55 @@ exports.updateEmployee = async (req, res) => {
       return res.status(404).json({ message: "Employee not found" });
     }
 
+    // Update top-level fields
     if (name) employee.name = name;
     if (email) employee.email = email;
     if (department) employee.department = department;
     if (salary !== undefined) employee.salary = salary;
     if (status) employee.status = status;
     if (position) employee.position = position;
-    if (personalDetails) employee.personalDetails = personalDetails;
-    if (contacts) employee.contacts = contacts;
-    if (workingHours) employee.workingHours = workingHours;
+
+    // Update personalDetails nested fields
+    if (personalDetails) {
+      if (!employee.personalDetails) employee.personalDetails = {};
+      
+      if (personalDetails.dateOfBirth) employee.personalDetails.dateOfBirth = personalDetails.dateOfBirth;
+      if (personalDetails.address) {
+        if (!employee.personalDetails.address) employee.personalDetails.address = {};
+        if (personalDetails.address.street) employee.personalDetails.address.street = personalDetails.address.street;
+        if (personalDetails.address.city) employee.personalDetails.address.city = personalDetails.address.city;
+        if (personalDetails.address.state) employee.personalDetails.address.state = personalDetails.address.state;
+        if (personalDetails.address.postalCode) employee.personalDetails.address.postalCode = personalDetails.address.postalCode;
+        if (personalDetails.address.country) employee.personalDetails.address.country = personalDetails.address.country;
+      }
+      if (personalDetails.gender) employee.personalDetails.gender = personalDetails.gender;
+      if (personalDetails.maritalStatus) employee.personalDetails.maritalStatus = personalDetails.maritalStatus;
+      if (personalDetails.nationality) employee.personalDetails.nationality = personalDetails.nationality;
+      if (personalDetails.languagesSpoken) employee.personalDetails.languagesSpoken = personalDetails.languagesSpoken;
+      if (personalDetails.educationHistory) employee.personalDetails.educationHistory = personalDetails.educationHistory;
+      if (personalDetails.previousWorkExperience) employee.personalDetails.previousWorkExperience = personalDetails.previousWorkExperience;
+    }
+
+    // Update contacts nested fields
+    if (contacts) {
+      if (!employee.contacts) employee.contacts = {};
+      
+      if (contacts.phone) employee.contacts.phone = contacts.phone;
+      if (contacts.emergencyContact) {
+        if (!employee.contacts.emergencyContact) employee.contacts.emergencyContact = {};
+        if (contacts.emergencyContact.name) employee.contacts.emergencyContact.name = contacts.emergencyContact.name;
+        if (contacts.emergencyContact.relationship) employee.contacts.emergencyContact.relationship = contacts.emergencyContact.relationship;
+        if (contacts.emergencyContact.phone) employee.contacts.emergencyContact.phone = contacts.emergencyContact.phone;
+      }
+    }
+
+    // Update workingHours
+    if (workingHours) {
+      if (!employee.workingHours) employee.workingHours = {};
+      if (workingHours.startTime) employee.workingHours.startTime = workingHours.startTime;
+      if (workingHours.endTime) employee.workingHours.endTime = workingHours.endTime;
+      if (workingHours.days) employee.workingHours.days = workingHours.days;
+    }
 
     await employee.save();
 

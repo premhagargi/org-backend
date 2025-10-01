@@ -68,7 +68,16 @@ exports.login = async (req, res) => {
 // ADMIN CREATES EMPLOYEE
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, department, salary, position } = req.body;
+    const { 
+      name, 
+      email, 
+      password, 
+      department, 
+      salary, 
+      position,
+      personalDetails,
+      contacts
+    } = req.body;
 
     // Ensure employee role
     const employee = new User({
@@ -78,7 +87,31 @@ exports.createEmployee = async (req, res) => {
       role: "employee",
       department,
       salary,
-      position
+      position,
+      personalDetails: {
+        dateOfBirth: personalDetails?.dateOfBirth,
+        address: {
+          street: personalDetails?.address?.street,
+          city: personalDetails?.address?.city,
+          state: personalDetails?.address?.state,
+          postalCode: personalDetails?.address?.postalCode,
+          country: personalDetails?.address?.country
+        },
+        gender: personalDetails?.gender,
+        maritalStatus: personalDetails?.maritalStatus,
+        nationality: personalDetails?.nationality,
+        languagesSpoken: personalDetails?.languagesSpoken,
+        educationHistory: personalDetails?.educationHistory,
+        previousWorkExperience: personalDetails?.previousWorkExperience
+      },
+      contacts: {
+        phone: contacts?.phone,
+        emergencyContact: {
+          name: contacts?.emergencyContact?.name,
+          relationship: contacts?.emergencyContact?.relationship,
+          phone: contacts?.emergencyContact?.phone
+        }
+      }
     });
 
     await employee.save();
@@ -89,6 +122,8 @@ exports.createEmployee = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
 
 // ---------------------
 // GET PROFILE (any logged-in user)
